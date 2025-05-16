@@ -1,0 +1,23 @@
+svg {
+    border: 1px solid black;
+  }
+  
+.labels {
+    paint-order: stroke;
+    stroke: #ffffffaa;
+    stroke-width: 3px;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+#tooltip {
+    position: absolute;
+  background: white;
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 12px;
+  pointer-events: none;
+  opacity: 0;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
