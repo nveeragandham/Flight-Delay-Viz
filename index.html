@@ -25,6 +25,54 @@
   
   <div id="tooltip"></div>
 
+  <div id="description">
+    <h3>Flight Delay Trends: Laid Flat Out ✈️)
+</h3>
+    <p>Flight delays are a common issue in the airline industry, affecting millions of passengers each year. This visualization provides an interactive way to explore flight delays across the United States.
+    Our project uses an interactive map so that users can explore the top 50 most delayed airport-to-airport flight paths from the month of January 2008. The delay patterns are represented through color, animation, and tooltip information. The visualization helps identify which routes experience the most significant delays, giving users an intuitive view of air traffic patterns. You can notice that delays center around one airport per day, which may be due to weather or other issues in that one area, causing delays to ripple outwards. Some cool this about our visualization is that you can explore the data by using the slider to change the date, and you can also hover over the lines to see more information about the delays. The animated planes also are an engaging way to show the top 5 delayed routes for each day.
+    </p>
+    
+    <h4>Sources:</h4>
+     <p>
+    This visualization models a cleaned version of the DelayedFlights.csv dataset primarily sourced from The Bureau of Transportation Statistics, (which covers all domestic flights in the United States).
+    </p>
+    <ul>
+      <li>
+        <a href="https://www.kaggle.com/datasets/giovamata/airlinedelaycauses/data" target="_blank" rel="noopener">
+          https://www.kaggle.com/datasets/giovamata/airlinedelaycauses/data
+        </a> (primary dataset)
+      </li>
+      <li>
+        <a href="https://raw.githubusercontent.com/jpatokal/openflights/master/data/airports.dat" target="_blank" rel="noopener">
+          https://raw.githubusercontent.com/jpatokal/openflights/master/data/airports.dat
+        </a>  (from https://github.com/jpatokal/openflights) 
+ 
+      </li>
+    </ul>
+
+    <h3>Team Progress</h3>
+<h5>Team Members:</h5>
+    <ul>
+      <li>Neha Veeragandham</li>
+      <li>Ananya Nagireddy</li>
+      <li>Caroline Perret</li>
+    </ul>
+
+    <p>
+      Our project was inspired by a discussion about in-flight entertainment maps that aim to visualize the current flight’s path. We noted how these maps tend to be rudimentary and awkwardly flattened (i.e. crescent panels to depict time zones, linear slices of the globe) and wanted to see if could attempt to show a high volume of flight path arrows laid out across the country. 
+
+      Initially, we aimed to visualize flight delay data from around the world and even implemented a rotating globe to display global flight paths. However, during the data cleaning process, we encountered significant issues with the completeness and consistency of the global dataset. As a result, we decided to focus on US domestic flights and switched to a US map for a more accurate and meaningful visualization.
+
+      <ul>
+        <li><strong>Caroline Perret:</strong> Created the slider and implemented the tooltip functionality and beginning of the color scale.</li>
+        <li><strong>Ananya Nagireddy:</strong> Cleaned the data and developed the function to translate airport codes to coordinates.</li>
+        <li><strong>Neha Veeragandham:</strong> Created zoom-in functionality, finished the color-coded scale and legend and added the flight animations.</li>
+      </ul>
+
+    </p>
+
+    
+
 
 
 
