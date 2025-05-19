@@ -61,7 +61,7 @@
     <p>
       Our project was inspired by a discussion about in-flight entertainment maps that aim to visualize the current flight’s path. We noted how these maps tend to be rudimentary and awkwardly flattened (i.e. crescent panels to depict time zones, linear slices of the globe) and wanted to see if could attempt to show a high volume of flight path arrows laid out across the country. 
 
-      Initially, we aimed to visualize flight delay data from around the world and even implemented a rotating globe to display global flight paths. However, during the data cleaning process, we encountered significant issues with the completeness and consistency of the global dataset. As a result, we decided to focus on US domestic flights and switched to a US map for a more accurate and meaningful visualization.
+      Initially, we aimed to visualize flight delay data from around the world and even implemented a rotating globe to display global flight paths (this viz is attached at the bottom). However, during the data cleaning process, we encountered significant issues with the completeness and consistency of the global dataset. As a result, we decided to focus on US domestic flights and switched to a US map for a more accurate and meaningful visualization.
 
       <ul>
         <li><strong>Caroline Perret:</strong> Created the slider and implemented the tooltip functionality and beginning of the color scale.</li>
@@ -70,8 +70,26 @@
       </ul>
 
     </p>
+    <h3>Next Steps</h3>
+    <p >If we were to continue working on this project, these are improvements we would make:</p>
+    <ul>
+      <li>Collect more data to get global flight delays and for visualizing additional months or years to analyze trends over time.</li>
+      <li>Optimize performance for larger datasets and smoother animations between days.</li>
+      <li>Implement a better zoom to get more detailed regional data.</li>
+    </ul>
 
-    
+    <hr>
+<section id="preliminary-vis" style="margin: 50px auto; text-align: center;">
+  <h2>Preliminary Visualization</h2>
+  <p>This was our initial version of the flight delay visualization. It featured a rotating globe/map view. The flight path data is hardcoded to create the red paths.</p>
+  
+  <iframe 
+    src="preliminary.html" 
+    width="1000" 
+    height="650" 
+    style="border: 2px solid #ccc; border-radius: 8px; margin-top: 20px;">
+  </iframe>
+</section>
 
 
 

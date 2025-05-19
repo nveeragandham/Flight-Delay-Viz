@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Preliminary Flight Delay Visualization</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+      background: #f9f9f9;
+    }
+
+    h1 {
+      background: #004080;
+      color: white;
+      padding: 20px;
+      margin: 0;
+    }
+
+    #vis {
+      margin-top: 20px;
+    }
+
+    .tooltip {
+      position: absolute;
+      visibility: hidden;
+      background: rgba(0, 0, 0, 0.7);
+      color: #fff;
+      padding: 5px 10px;
+      border-radius: 5px;
+      font-size: 13px;
+      pointer-events: none;
+    }
+
+    button {
+      margin: 20px;
+      padding: 10px 20px;
+      background-color: #0066cc;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #004c99;
+    }
+  </style>
+</head>
+<body>
+  <h1>Preliminary Flight Delay Visualization</h1>
+
+  <div id="vis"></div>
+  <div id="tooltip" class="tooltip"></div>
+  <button id="switch-view">Switch View</button>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const width = 1000, height = 600;
+      const svg = d3.select("#vis").append("svg")
+        .attr("width", width)
+        .attr("height", height);
+
+      let isFlat = false;
+
+      const projection = interpolateProjection(d3.geoOrthographicRaw, d3.geoEquirectangularRaw)
+        .scale(170)
+        .translate([width / 2, height / 2])
+        .precision(0.1);
+
+      const path = d3.geoPath().projection(projection);
+
+      d3.json("https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson").then(geoData => {
+        svg.selectAll("path")
+          .data(geoData.features)
+          .enter().append("path")
+          .attr("d", path)
+          .attr("fill", "#69b3a2")
+          .attr("stroke", "#333");
+
+        const countries = [
+          { name: "United States", coords: [-100, 40] },
+          { name: "Brazil", coords: [-55, -10] },
+          { name: "India", coords: [78, 22] },
+          { name: "China", coords: [104, 35] },
+          { name: "Australia", coords: [133, -25] }
+        ];
+
+        svg.selectAll("text.label")
+          .data(countries)
+          .enter().append("text")
+          .attr("class", "label")
+          .attr("x", d => projection(d.coords)[0])
+          .attr("y", d => projection(d.coords)[1])
+          .text(d => d.name)
+          .style("fill", "#333")
+          .style("font-size", "12px");
+
+        const flights = [
+          { from: [-74, 40], to: [2.35, 48.85], label: "New York to Paris" },
+          { from: [139.69, 35.68], to: [-0.12, 51.5], label: "Tokyo to London" },
+          { from: [-118.25, 34.05], to: [151.21, -33.87], label: "Los Angeles to Sydney" }
+        ];
+
+        svg.selectAll("path.flight")
+          .data(flights)
+          .enter().append("path")
+          .attr("class", "flight")
+          .attr("d", d => geoArc(d.from, d.to))
+          .attr("stroke", "#f00")
+          .attr("stroke-width", "2px")
+          .attr("fill", "none")
+          .attr("opacity", 0.6);
+
+        const tooltip = d3.select("#tooltip");
+
+        svg.selectAll("path.flight")
+          .on("mouseover", function (event, d) {
+            tooltip.style("visibility", "visible").text(d.label);
+          })
+          .on("mousemove", function (event) {
+            tooltip.style("top", (event.pageY - 10) + "px").style("left", (event.pageX + 10) + "px");
+          })
+          .on("mouseout", function () {
+            tooltip.style("visibility", "hidden");
+          });
+
+        function rotateGlobe() {
+          if (!isFlat) {
+            projection.rotate([Date.now() / 150, -20]);
+            svg.selectAll("path").attr("d", path);
+            svg.selectAll("path.flight").attr("d", d => geoArc(d.from, d.to));
+            svg.selectAll("text.label")
+              .attr("x", d => projection(d.coords)[0])
+              .attr("y", d => projection(d.coords)[1]);
+          }
+          requestAnimationFrame(rotateGlobe);
+        }
+
+        rotateGlobe();
+      });
+
+      document.getElementById("switch-view").addEventListener("click", function () {
+        isFlat = !isFlat;
+        d3.transition().duration(2000).tween("projection", function () {
+          return function (t) {
+            projection.alpha(isFlat ? t : 1 - t);
+            svg.selectAll("path").attr("d", path);
+            svg.selectAll("path.flight").attr("d", d => geoArc(d.from, d.to));
+            svg.selectAll("text.label")
+              .attr("x", d => projection(d.coords)[0])
+              .attr("y", d => projection(d.coords)[1]);
+          };
+        });
+        this.textContent = isFlat ? "Switch to Globe" : "Switch to Flat Map";
+      });
+
+      function geoArc(from, to) {
+        const source = projection(from);
+        const target = projection(to);
+        const mid = [(source[0] + target[0]) / 2, (source[1] + target[1]) / 2 - 100];
+        return d3.line().curve(d3.curveBasis)([source, mid, target]);
+      }
+
+      function interpolateProjection(raw0, raw1) {
+        const mutate = d3.geoProjectionMutator(t => (x, y) => {
+          const [x0, y0] = raw0(x, y), [x1, y1] = raw1(x, y);
+          return [x0 + t * (x1 - x0), y0 + t * (y1 - y0)];
+        });
+        let t = 0;
+        return Object.assign(mutate(t), {
+          alpha(_) {
+            return arguments.length ? mutate(t = +_) : t;
+          }
+        });
+      }
+    });
+  </script>
+</body>
+</html>
