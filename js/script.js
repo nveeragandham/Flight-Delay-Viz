@@ -118,13 +118,18 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function updateFlightsForDate(date) {
         const dateStr = formatDate(date);  // format as "2008-01-01"
+        
 
         // filter by date
         let filteredFlights = allFlights.filter(f => f.date === dateStr);
         filteredFlights.sort((a, b) => b.delay - a.delay);
+        
         filteredFlights = filteredFlights.slice(0, 50); // currently selecting top 50
 
         g.selectAll("path.flight").remove();
+        g.selectAll("circle.airport").remove();
+        g.selectAll(".flying-dot").remove();
+        g.selectAll(".invisible-flight-path").remove();
 
         g.selectAll("path.flight")
             .data(filteredFlights)
@@ -151,16 +156,102 @@ document.addEventListener("DOMContentLoaded", function () {
             .on("mouseout", function () {
                 tooltip.style("visibility", "hidden")
                     .style("opacity", 0);
-            })
+            });
+             let airportSet = new Set();
+        
+        //anniamtion
+      const animatedFlights = filteredFlights.slice(0, 5); // top 5 delayed
 
+animatedFlights.forEach((d, i) => {
+  const arcPath = geoArc(
+    [d.originCoords.lon, d.originCoords.lat],
+    [d.destCoords.lon, d.destCoords.lat]
+  );
+
+  if (!arcPath) return;
+
+  const pathElem = g.append("path")
+    .attr("d", arcPath)
+    .attr("class", "invisible-flight-path")
+    .attr("fill", "none")
+    .attr("stroke", "none")
+    .node();
+
+  const totalLength = pathElem.getTotalLength();
+
+  const planeMarker = g.append("path")
+    .attr("class", "flying-dot")
+    .attr("d", "M0,-6 L15,0 L0,6 L6,0 Z") // triangle
+    .attr("fill", "black")
+    .attr("opacity", 0.9);
+
+  function animatePlane() {
+    planeMarker
+      .transition()
+      .duration(10000 + i * 300)
+      .ease(d3.easeLinear)
+      .attrTween("transform", function () {
+        return function (t) {
+          const point = pathElem.getPointAtLength(t * totalLength);
+          const next = pathElem.getPointAtLength(Math.min(t * totalLength + 1, totalLength));
+          const angle = Math.atan2(next.y - point.y, next.x - point.x) * 180 / Math.PI;
+          return `translate(${point.x},${point.y}) rotate(${angle})`;
+        };
+      })
+      .on("end", animatePlane); // loop
+  }
+
+  animatePlane();
+});
+
+
+        let activeAirports = [];
+
+        filteredFlights.forEach(f => {
+            const keyOrigin = `${f.originCoords.lat},${f.originCoords.lon}`;
+            const keyDest = `${f.destCoords.lat},${f.destCoords.lon}`;
+
+            if (!airportSet.has(keyOrigin)) {
+            activeAirports.push({ code: f.origin, coords: f.originCoords });
+            airportSet.add(keyOrigin);
+            }
+
+            if (!airportSet.has(keyDest)) {
+            activeAirports.push({ code: f.dest, coords: f.destCoords });
+            airportSet.add(keyDest);
+            }
+        });
+        g.selectAll("circle.airport")
+    .data(activeAirports)
+    .enter()
+    .append("circle")
+    .attr("class", "airport")
+    .attr("cx", d => projection([d.coords.lon, d.coords.lat])[0])
+    .attr("cy", d => projection([d.coords.lon, d.coords.lat])[1])
+    .attr("r", 3)
+    .attr("fill", "black")
+    .attr("stroke", "white")
+    .attr("stroke-width", 0.5)
+    .on("mouseover", (event, d) => {
+      tooltip.style("visibility", "visible")
+        .style("opacity", 1)
+        .text(`Airport: ${d.code}`);
+    })
+    .on("mousemove", event => {
+      tooltip.style("top", (event.pageY - 10) + "px")
+        .style("left", (event.pageX + 10) + "px");
+    })
+    .on("mouseout", () => {
+      tooltip.style("visibility", "hidden")
+        .style("opacity", 0);
+    });
     }
-
 });
 
     // Legend setup
 const legendSvg = d3.select("#legend")
   .append("svg")
-  .attr("width", 320)
+  .attr("width", 450)
   .attr("height", 60);
 
 const defs = legendSvg.append("defs");
@@ -209,3 +300,17 @@ legendSvg.append("text")
   .attr("y", 40)
   .attr("text-anchor", "middle")
   .text("4+ hours");
+legendSvg.append("path")
+  .attr("d", "M0,-6 L16,0 L0,6 L5,0 Z") 
+  .attr("transform", "translate(375, 18) rotate(0) scale(1.5)")
+
+  .attr("fill", "black")
+  .attr("opacity", 0.9);
+
+legendSvg.append("text")
+  .attr("x", 425)
+  .attr("y", 40)
+  .attr("text-anchor", "end")
+  .attr("font-size", "11px")
+  .text("Longest Delays");
+
