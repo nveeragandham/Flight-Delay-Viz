@@ -3,8 +3,21 @@ document.addEventListener("DOMContentLoaded", function () {
     const svg = d3.select("#vis").append("svg")
         .attr("width", width)
         .attr("height", height);
+    const g = svg.append("g");
 
-    let isFlat = false;
+    const zoom = d3.zoom()
+        .scaleExtent([1, 8])
+        .on("zoom", (event) => {
+            g.attr("transform", event.transform);
+        });
+
+        svg.call(zoom);
+
+    d3.select("#reset-zoom").on("click", () => {
+        svg.transition().duration(750).call(zoom.transform, d3.zoomIdentity);
+        });
+
+
 
     const tooltip = d3.select("#tooltip");
 
@@ -50,88 +63,30 @@ document.addEventListener("DOMContentLoaded", function () {
         .style('font-weight', 'bold')
         .text(`Selected date: ${formatLabel(selectedDate)}`);
 
-    const projection = interpolateProjection(d3.geoOrthographicRaw, d3.geoEquirectangularRaw)
-        .scale(170)
-        .translate([width / 2, height / 2])
-        .precision(0.1);
+    const projection = d3.geoAlbersUsa();
+    const path = d3.geoPath();
+
+    d3.json("https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json").then(us => {
+        const states = topojson.feature(us, us.objects.states);
+        const projection = d3.geoAlbersUsa()
+            .scale(1100)
+            .translate([width / 2.05, height / 2.4]);
 
     const path = d3.geoPath().projection(projection);
 
-    d3.json("https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson").then(geoData => {
-        svg.selectAll("path")
-            .data(geoData.features)
-            .enter().append("path")
-            .attr("d", path)
-            .attr("fill", "#69b3a2")
-            .attr("stroke", "#333");
-
-        const countries = [
-            { name: "United States", coords: [-100, 40] },
-            { name: "Brazil", coords: [-55, -10] },
-            { name: "India", coords: [78, 22] },
-            { name: "China", coords: [104, 35] },
-            { name: "Australia", coords: [133, -25] }
-        ];
-
-        svg.selectAll("text.label")
-            .data(countries)
-            .enter().append("text")
-            .attr("class", "label")
-            .attr("x", d => projection(d.coords)[0])
-            .attr("y", d => projection(d.coords)[1])
-            .text(d => d.name)
-            .style("fill", "#333")
-            .style("font-size", "12px");
+    g.selectAll("path")
+        .data(states.features)
+        .enter().append("path")
+        .attr("d", path)
+        .attr("fill", "#69b3a2")
+        .attr("stroke", "#333");
 
         // load flight data
         d3.json("data/flights.json").then(flights => {
             allFlights = flights;
 
             updateFlightsForDate(selectedDate);
-
-            if (!isFlat) {
-                rotateGlobe();
-            }
         });
-
-        function rotateGlobe() {
-            if (!isFlat) {
-                projection.rotate([Date.now() / 150, -20]);
-                svg.selectAll("path").attr("d", path);
-                svg.selectAll("path.flight").attr("d", d =>
-                    geoArc(
-                        [d.originCoords.lon, d.originCoords.lat],
-                        [d.destCoords.lon, d.destCoords.lat]
-                    )
-                );
-
-                svg.selectAll("text.label")
-                    .attr("x", d => projection(d.coords)[0])
-                    .attr("y", d => projection(d.coords)[1]);
-            }
-            requestAnimationFrame(rotateGlobe);
-        }
-
-        rotateGlobe();
-
-    });
-
-    document.getElementById("switch-view").addEventListener("click", function () {
-        isFlat = !isFlat;
-        d3.transition().duration(2000).tween("projection", function () {
-            return function (t) {
-                projection.alpha(isFlat ? t : 1 - t);
-                svg.selectAll("path").attr("d", path);
-                svg.selectAll("path.flight").attr("d", d => geoArc(
-                    [d.originCoords.lon, d.originCoords.lat],
-                    [d.destCoords.lon, d.destCoords.lat]
-                ));
-                svg.selectAll("text.label")
-                    .attr("x", d => projection(d.coords)[0])
-                    .attr("y", d => projection(d.coords)[1]);
-            };
-        });
-        this.textContent = isFlat ? "Switch to Globe" : "Switch to Flat Map";
     });
 
     function geoArc(from, to) {
@@ -141,18 +96,25 @@ document.addEventListener("DOMContentLoaded", function () {
         return d3.line().curve(d3.curveBasis)([source, mid, target]);
     }
 
-    function interpolateProjection(raw0, raw1) {
-        const mutate = d3.geoProjectionMutator(t => (x, y) => {
-            const [x0, y0] = raw0(x, y), [x1, y1] = raw1(x, y);
-            return [x0 + t * (x1 - x0), y0 + t * (y1 - y0)];
-        });
-        let t = 0;
-        return Object.assign(mutate(t), {
-            alpha(_) {
-                return arguments.length ? mutate(t = +_) : t;
-            }
-        });
-    }
+    // function interpolateProjection(raw0, raw1) {
+    //     const mutate = d3.geoProjectionMutator(t => (x, y) => {
+    //         const [x0, y0] = raw0(x, y), [x1, y1] = raw1(x, y);
+    //         return [x0 + t * (x1 - x0), y0 + t * (y1 - y0)];
+    //     });
+    //     let t = 0;
+    //     return Object.assign(mutate(t), {
+    //         alpha(_) {
+    //             return arguments.length ? mutate(t = +_) : t;
+    //         }
+    //     });
+    // }
+
+        const delayColorScale = d3.scaleLinear()
+            .domain([0, 120, 240])
+            .range(["yellow", "orange", "red"]);
+
+
+
 
     function updateFlightsForDate(date) {
         const dateStr = formatDate(date);  // format as "2008-01-01"
@@ -162,9 +124,9 @@ document.addEventListener("DOMContentLoaded", function () {
         filteredFlights.sort((a, b) => b.delay - a.delay);
         filteredFlights = filteredFlights.slice(0, 50); // currently selecting top 50
 
-        svg.selectAll("path.flight").remove();
+        g.selectAll("path.flight").remove();
 
-        svg.selectAll("path.flight")
+        g.selectAll("path.flight")
             .data(filteredFlights)
             .enter()
             .append("path")
@@ -173,7 +135,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 [d.originCoords.lon, d.originCoords.lat],
                 [d.destCoords.lon, d.destCoords.lat]
             ))
-            .attr("stroke", d => d.delay > 15 ? "red" : "#00f") // delay coloring -- not really working
+            .attr("stroke", d => delayColorScale(d.delay)) // delay coloring -- not really working
             .attr("stroke-width", d => Math.min(4, d.delay / 10 + 1))
             .attr("fill", "none")
             .attr("opacity", 0.6)
@@ -194,3 +156,56 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
 });
+
+    // Legend setup
+const legendSvg = d3.select("#legend")
+  .append("svg")
+  .attr("width", 320)
+  .attr("height", 60);
+
+const defs = legendSvg.append("defs");
+
+const linearGradient = defs.append("linearGradient")
+  .attr("id", "legend-gradient")
+  .attr("x1", "0%")
+  .attr("x2", "100%")
+  .attr("y1", "0%")
+  .attr("y2", "0%");
+
+linearGradient.selectAll("stop")
+  .data([
+    { offset: "0%", color: "yellow" },
+    { offset: "50%", color: "orange" },
+    { offset: "100%", color: "red" }
+  ])
+  .enter()
+  .append("stop")
+  .attr("offset", d => d.offset)
+  .attr("stop-color", d => d.color);
+
+legendSvg.append("rect")
+  .attr("x", 20)
+  .attr("y", 10)
+  .attr("width", 260)
+  .attr("height", 15)
+  .style("fill", "url(#legend-gradient)")
+  .style("stroke", "#333")
+  .style("stroke-width", 1);
+
+legendSvg.append("text")
+  .attr("x", 30)
+  .attr("y", 40)
+  .attr("text-anchor", "middle")
+  .text("0 hours");
+
+legendSvg.append("text")
+  .attr("x", 150)
+  .attr("y", 40)
+  .attr("text-anchor", "middle")
+  .text("2 hours");
+
+legendSvg.append("text")
+  .attr("x", 280)
+  .attr("y", 40)
+  .attr("text-anchor", "middle")
+  .text("4+ hours");
