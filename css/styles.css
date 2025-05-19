@@ -21,3 +21,15 @@ svg {
   opacity: 0;
   box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
+
+#slider {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 20px auto;
+}
+
+#selected-date {
+  text-align: center;
+  margin-top: 10px;
+}

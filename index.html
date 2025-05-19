@@ -1,27 +1,32 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flight Delay Globe Visualization</title>
-    <link rel="stylesheet" href="css/styles.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flight Delay Globe Visualization</title>
+  <link rel="stylesheet" href="css/styles.css">
 </head>
+
 <body>
-    <h1 style="text-align: center;">Flight Delay Globe Visualization</h1>
-      
-
-      <div id="vis" style="text-align: center;"></div><!-- This is what your visualization will go in-->
-      <div id="tooltip"></div> 
-
-      <button id="switch-view">Switch View</button>
+  <h1 style="text-align: center;">Flight Delay Globe Visualization</h1>
 
 
-    
+  <div id="slider"></div>
+  <div id="vis" style="text-align: center;"></div><!-- This is what your visualization will go in-->
+  <div id="tooltip"></div>
 
-    <script src="https://unpkg.com/topojson@3"></script>
-    <script src="https://d3js.org/d3.v7.min.js"></script>
-    <script src="https://unpkg.com/three@0.150.1/build/three.min.js"></script>
-    <script src="https://unpkg.com/three-globe"></script>
-    <script src="js/script.js"></script>
+  <button id="switch-view">Switch View</button>
+
+
+
+
+  <script src="https://unpkg.com/topojson@3"></script>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://unpkg.com/three@0.150.1/build/three.min.js"></script>
+  <script src="https://unpkg.com/three-globe"></script>
+  <script src="https://unpkg.com/d3-simple-slider"></script>
+  <script src="js/script.js"></script>
 </body>
+
 </html>
